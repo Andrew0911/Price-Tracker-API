@@ -35,7 +35,7 @@ services:
     volumes:
       - ./python:/app # Montăm codul pentru hot-reloading
     environment:
-      - DATABASE_URL=mysql+pymysql://admin:admin@mysql:3306/price_tracker
+      - DATABASE_URL=mysql+pymysql://root:root@mysql:3306/price_tracker
     depends_on:
       - mysql
       - redis
@@ -48,8 +48,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: price_tracker
-      MYSQL_USER: admin
-      MYSQL_PASSWORD: admin
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
     ports:
       - "3307:3306"
     volumes:
