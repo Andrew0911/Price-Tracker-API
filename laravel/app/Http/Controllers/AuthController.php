@@ -44,7 +44,7 @@ class AuthController extends BaseController
         $email = $request->query('email');
         $loginUrl = env('FRONTEND_URL') . '/login';
 
-        if (! $token || ! $email) {
+        if (!$token || !$email) {
             return redirect($loginUrl . '?verified=0&error=invalid_token');
         }
 
@@ -52,7 +52,7 @@ class AuthController extends BaseController
             ->where('email_verification_token', $token)
             ->first();
 
-        if (! $user) {
+        if (!$user) {
             return redirect($loginUrl . '?verified=0&error=invalid_token');
         }
 
@@ -77,7 +77,7 @@ class AuthController extends BaseController
         }
 
         if (empty($user->email_verified_at)) {
-            return $this->sendFailResponse(__('general.emailNotVerified'), status: Response::HTTP_FORBIDDEN);
+            return $this->sendFailResponse(__('general.emailNotVerified'), status: Response::HTTP_UNAUTHORIZED);
         }
 
         $expiresAt = now()->addMinutes(config('sanctum.expiration'));
@@ -85,7 +85,7 @@ class AuthController extends BaseController
         // invalidate previous tokens
         $user->tokens()->delete();
 
-        $token = $user->createToken('admin-login')->plainTextToken;
+        $token = $user->createToken('user-login')->plainTextToken;
 
         return $this->sendSuccessResponse(__('general.loginSuccessful'), [
             'token' => $token,
