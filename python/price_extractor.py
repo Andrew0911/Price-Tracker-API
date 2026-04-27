@@ -15,7 +15,26 @@ CURRENCY_MAPPING = {
     '¥': 'JPY',
 }
 
-def extract_price_from_text(text: str) -> Optional[Tuple[float, str]]:
+def normalize_price_string(text: str) -> str:
+    """Normalize European price format (6.129,99) to standard float string (6129.99)."""
+    # Keep only digits, dots and commas
+    cleaned = re.sub(r'[^\d.,]', '', text.strip())
+
+    if not cleaned:
+        return cleaned
+
+    # European format: dot as thousands separator, comma as decimal
+    # e.g. 6.129,99 or 1.234.567,89
+    if re.search(r'\d\.\d{3}(?:[,.]|$)', cleaned):
+        cleaned = cleaned.replace('.', '').replace(',', '.')
+    # Comma as decimal only (no dot present), e.g. 129,99
+    elif ',' in cleaned and '.' not in cleaned:
+        cleaned = cleaned.replace(',', '.')
+
+    return cleaned
+
+
+def parse_price(text: str) -> Optional[Tuple[float, str]]:
     if not text:
         return None
     
@@ -25,6 +44,9 @@ def extract_price_from_text(text: str) -> Optional[Tuple[float, str]]:
         
         # Remove currency symbols
         text = re.sub(r'(Lei|RON|EUR|USD|€|\$|£|¥)', '', text, flags=re.IGNORECASE)
+
+        # Normalize European number format before regex matching
+        text = normalize_price_string(text)
 
         # Extract price patterns
         price_patterns = [

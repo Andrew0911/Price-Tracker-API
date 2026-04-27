@@ -49,15 +49,14 @@ trait ApiResponseTrait
         ];
 
         if (!empty($data)) {
-
-            $response['data'] = $data;
-
-            if (is_object($data) && $data->resource instanceof LengthAwarePaginator) {
-                $paginator = $data->resource;
-                $response['page'] = $paginator->currentPage();
-                $response['lastPage'] = $paginator->lastPage();
-                $response['perPage'] = $paginator->perPage();
-                $response['total'] = $paginator->total();
+            if ($data instanceof LengthAwarePaginator) {
+                $response['data'] = $data->items();
+                $response['page'] = $data->currentPage();
+                $response['lastPage'] = $data->lastPage();
+                $response['perPage'] = $data->perPage();
+                $response['total'] = $data->total();
+            } else {
+                $response['data'] = $data;
             }
         }
 
