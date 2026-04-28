@@ -18,14 +18,10 @@ class PriceAlertController extends BaseController
             return $this->sendErrorResponse(status: Response::HTTP_FORBIDDEN);
         }
 
-        // Deactivate any existing active alert for this product/user
-        $product->priceAlerts()->where('is_active', true)->where('user_id', $request->user()->id)->update(['is_active' => false]);
-
-        $alert = $product->priceAlerts()->create([
-            'user_id' => $request->user()->id,
-            'target_price' => $request->target_price,
-            'is_active' => true,
-        ]);
+        $alert = $product->priceAlerts()->updateOrCreate(
+            ['user_id' => $request->user()->id],
+            ['target_price' => $request->target_price, 'is_active' => true],
+        );
 
         return $this->sendSuccessResponse(data: $alert);
     }

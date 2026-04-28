@@ -2,4 +2,4 @@
 
 use Illuminate\Support\Facades\Schedule;
 
-//Schedule::command('scrape:products')->hourly();
+Schedule::command('scrape:products')->hourly();

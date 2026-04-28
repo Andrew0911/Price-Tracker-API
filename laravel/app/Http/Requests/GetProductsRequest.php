@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\StoreEnum;
+use Illuminate\Validation\Rules\Enum;
+
 class GetProductsRequest extends ApiBaseRequest
 {
         /**
@@ -26,7 +29,11 @@ class GetProductsRequest extends ApiBaseRequest
             'added_after' => [
                 'nullable',
                 'date',
-            ]
+            ],
+            'store' => [
+                'nullable',
+                new Enum(StoreEnum::class),
+            ],
         ];
     }
 }

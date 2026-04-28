@@ -11,4 +11,9 @@ class ProductFilter extends BaseFilter
     {
         return $this->query->where('product_user.created_at', '>=',  Carbon::parse($date));
     }
+
+    public function store(string $store): Builder
+    {
+        return $this->query->where('products.store', $store);
+    }
 }
