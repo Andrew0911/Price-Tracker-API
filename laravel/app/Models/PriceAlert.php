@@ -13,16 +13,16 @@ class PriceAlert extends Model
         'user_id',
         'product_id',
         'target_price',
-        'is_active',
         'notified_at',
+        'triggered_at',
     ];
 
     protected function casts(): array
     {
         return [
             'target_price' => 'decimal:2',
-            'is_active' => 'boolean',
             'notified_at' => 'datetime',
+            'triggered_at' => 'datetime',
         ];
     }
 

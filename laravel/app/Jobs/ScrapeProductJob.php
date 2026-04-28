@@ -53,17 +53,13 @@ class ScrapeProductJob implements ShouldQueue
             ]);
         }
 
-        // Check active price alerts
+        // Check active price alerts — mark triggered_at so alerts:notify picks them up
         $product->priceAlerts()
-            ->where('is_active', true)
+            ->whereNull('triggered_at')
             ->where('target_price', '>=', $result['price'])
             ->each(function ($alert) use ($result, $product, $now) {
-                $alert->update([
-                    'is_active' => false,
-                    'notified_at' => $now,
-                ]);
+                $alert->update(['triggered_at' => $now]);
 
-                // TODO: dispatch notification / mail to product owner
                 Log::info("Price alert triggered for user #{$alert->user_id} product #{$product->id}: {$result['price']} <= {$alert->target_price}");
             });
     }

@@ -18,9 +18,16 @@ class PriceAlertController extends BaseController
             return $this->sendErrorResponse(status: Response::HTTP_FORBIDDEN);
         }
 
+        if ((float) $request->target_price >= (float) $product->current_price) {
+            return $this->sendErrorResponse(
+                message: 'The target price must be lower than the current product price.',
+                status: Response::HTTP_UNPROCESSABLE_ENTITY,
+            );
+        }
+
         $alert = $product->priceAlerts()->updateOrCreate(
             ['user_id' => $request->user()->id],
-            ['target_price' => $request->target_price, 'is_active' => true],
+            ['target_price' => $request->target_price, 'notified_at' => null, 'triggered_at' => null],
         );
 
         return $this->sendSuccessResponse(data: $alert);

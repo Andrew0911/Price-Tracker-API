@@ -76,7 +76,7 @@ class ProductController extends BaseController
 
         $product->load([
             'priceHistory' => fn($q) => $q->orderBy('checked_at')->limit(60),
-            'priceAlerts' => fn($q) => $q->where('is_active', true)->where('user_id', $request->user()->id),
+            'priceAlerts' => fn($q) => $q->whereNull('triggered_at')->where('user_id', $request->user()->id),
         ]);
 
         return $this->sendSuccessResponse(data: $product);
@@ -90,9 +90,7 @@ class ProductController extends BaseController
 
         $request->user()->products()->detach($product->id);
 
-        if ($product->users()->count() === 0) {
-            $product->delete();
-        }
+        $product->priceAlerts()->where('user_id', $request->user()->id)->delete();
 
         return $this->sendSuccessResponse();
     }

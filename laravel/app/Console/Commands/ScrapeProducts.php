@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Jobs\ScrapeProductJob;
 use App\Models\Product;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class ScrapeProducts extends Command
 {
@@ -15,17 +16,27 @@ class ScrapeProducts extends Command
     {
         $count = 0;
 
-        foreach (Product::query()->select('id')->cursor() as $product) {
+        $timeThreshold = now()->subHour();
+
+        // Check products that haven't been cheked for over than an hour
+        $products = Product::query()
+            ->where('last_checked_at', '<', $timeThreshold)
+            ->orWhereNull('last_checked_at')
+            ->limit(5000) // Batches of 5000 to protect the queue
+            ->select('id')
+            ->cursor();
+
+        foreach ($products as $product) {
             ScrapeProductJob::dispatch($product->id)->onQueue('cron-scraping');
             $count++;
         }
 
         if ($count === 0) {
-            $this->info('No products to scrape.');
+            Log::info('No products to scrape.');
             return self::SUCCESS;
         }
 
-        $this->info("Dispatched {$count} scrape job(s).");
+        Log::info("Dispatched {$count} scrape job(s).");
 
         return self::SUCCESS;
     }
