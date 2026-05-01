@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
+use App\Http\Requests\DeleteAccountRequest;
 use App\Mail\RegisterEmail;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -104,5 +105,23 @@ class AuthController extends BaseController
     public function user(): JsonResponse
     {
        return $this->sendSuccessResponse(data: auth('sanctum')->user());
+    }
+
+    public function deleteAccount(DeleteAccountRequest $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!Hash::check($request->password, $user->password)) {
+            return $this->sendErrorResponse(
+                message: __('general.invalidCredentials'),
+                errors: ['password' => [__('general.invalidCredentials')]],
+                status: Response::HTTP_UNPROCESSABLE_ENTITY,
+            );
+        }
+
+        $user->tokens()->delete();
+        $user->delete();
+
+        return $this->sendSuccessResponse('Account deleted successfully.');
     }
 }

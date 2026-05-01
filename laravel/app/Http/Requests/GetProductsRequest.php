@@ -34,6 +34,10 @@ class GetProductsRequest extends ApiBaseRequest
                 'nullable',
                 new Enum(StoreEnum::class),
             ],
+            'available' => [
+                'nullable',
+                'integer'
+            ]
         ];
     }
 }

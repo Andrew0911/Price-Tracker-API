@@ -18,6 +18,13 @@ class PriceAlertController extends BaseController
             return $this->sendErrorResponse(status: Response::HTTP_FORBIDDEN);
         }
 
+        if ($product->scrape_error) {
+            return $this->sendErrorResponse(
+                message: 'Cannot set a price alert on an unavailable product.',
+                status: Response::HTTP_UNPROCESSABLE_ENTITY,
+            );
+        }
+
         if ((float) $request->target_price >= (float) $product->current_price) {
             return $this->sendErrorResponse(
                 message: 'The target price must be lower than the current product price.',

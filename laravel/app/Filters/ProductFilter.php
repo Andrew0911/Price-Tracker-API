@@ -16,4 +16,13 @@ class ProductFilter extends BaseFilter
     {
         return $this->query->where('products.store', $store);
     }
+
+    public function status(int $status): Builder
+    {
+        return match ($status) {
+            1 => $this->query->whereNull('products.scrape_error'),
+            0 => $this->query->whereNotNull('products.scrape_error'),
+            default => $this->query,
+        };
+    }
 }

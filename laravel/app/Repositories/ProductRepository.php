@@ -14,11 +14,16 @@ class ProductRepository extends BaseRepository
 
     public function paginate(?BaseFilter $filter = null): LengthAwarePaginator
     {
+        $userId = auth()->id();
+
         return auth()->user()
             ->products()
+            ->with(['priceAlerts' => fn($q) => $q->whereNull('triggered_at')->where('user_id', $userId)])
             ->when($filter, fn($query) => $filter->apply($query))
             ->latest('products.created_at')
             ->paginate(request()->integer('perPage', 10))
-            ->through(fn($p) => $p->makeHidden(['created_at', 'updated_at', 'pivot']));
+            ->through(function ($p) {
+                return $p->makeHidden(['created_at', 'updated_at', 'pivot']);
+            });
     }
 }

@@ -1,7 +1,6 @@
-version: '3.8'
+version: "3.8"
 
 services:
-
   # SERVICIUL BACKEND (API)
   backend:
     privileged: true
@@ -13,8 +12,9 @@ services:
     volumes:
       - ./laravel/:/var/www/html
       - ./docker/supervisord.conf:/etc/supervisor/conf.d/supervisord.conf
-      - ./docker/linux/fpm-pool.conf:/etc/php/8.4/fpm/pool.d/www.conf
-      - ./docker/linux/php-custom.ini:/etc/php/8.4/cli/conf.d/99-custom.ini
+      - ./docker/linux/fpm-pool.conf:/usr/local/etc/php-fpm.d/www.conf
+      - ./docker/linux/php-custom.ini:/usr/local/etc/php/conf.d/99-custom.ini
+      - ./docker/linux/opcache.ini:/usr/local/etc/php/conf.d/98-opcache.ini
       - ./docker/linux/openssl.cnf:/etc/ssl/openssl.cnf
       - ./docker/nginx.sample.conf:/etc/nginx/nginx.conf
     ports:
@@ -35,7 +35,7 @@ services:
     volumes:
       - ./python:/app # Montăm codul pentru hot-reloading
     environment:
-      - DATABASE_URL=mysql+pymysql://root:root@mysql:3306/price_tracker
+      - DATABASE_URL=mysql+pymysql://admin:secret@mysql:3306/price_tracker
     depends_on:
       - mysql
       - redis
@@ -48,8 +48,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: price_tracker
-      MYSQL_USER: root
-      MYSQL_PASSWORD: root
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: secret
     ports:
       - "3307:3306"
     volumes:

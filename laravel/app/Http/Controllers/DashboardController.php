@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\BaseController;
+use App\Models\PriceAlert;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -17,7 +18,7 @@ class DashboardController extends BaseController
         $totalTracked = $products->count();
         $priceDrops = 0;
         $priceIncreases = 0;
-        $bestSaving = 0;
+        $activeAlerts = PriceAlert::where('user_id', $user->id)->whereNull('triggered_at')->count();
 
         foreach ($products as $product) {
             $history = $product->priceHistory->sortBy('checked_at')->values();
@@ -37,10 +38,6 @@ class DashboardController extends BaseController
 
             if ($diff < 0) {
                 $priceDrops++;
-                $saving = abs($diff);
-                if ($saving > $bestSaving) {
-                    $bestSaving = $saving;
-                }
             } elseif ($diff > 0) {
                 $priceIncreases++;
             }
@@ -50,7 +47,7 @@ class DashboardController extends BaseController
             'total_tracked' => $totalTracked,
             'price_drops' => $priceDrops,
             'price_increases' => $priceIncreases,
-            'best_saving' => round($bestSaving, 2),
+            'active_alerts' => $activeAlerts,
         ]);
     }
 }

@@ -17,6 +17,7 @@ Route::middleware(['throttle:api'])->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [AuthController::class, 'logout'])->name('logout');
         Route::get('user', [AuthController::class, 'user'])->name('user');
+        Route::delete('account', [AuthController::class, 'deleteAccount'])->name('account.delete');
 
         // Dashboard
         Route::get('dashboard/stats', [DashboardController::class, 'stats'])->name('dashboard.stats');
