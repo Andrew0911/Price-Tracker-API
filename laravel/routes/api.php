@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FriendsController;
 use App\Http\Controllers\PriceAlertController;
 use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
@@ -21,6 +22,17 @@ Route::middleware(['throttle:api'])->group(function () {
 
         // Dashboard
         Route::get('dashboard/stats', [DashboardController::class, 'stats'])->name('dashboard.stats');
+
+        // Users & Friends
+        Route::get('users', [FriendsController::class, 'users'])->name('users.index');
+        Route::prefix('friends')->group(function () {
+            Route::get('/', [FriendsController::class, 'index'])->name('friends.index');
+            Route::get('/requests', [FriendsController::class, 'requests'])->name('friends.requests');
+            Route::post('/{user}', [FriendsController::class, 'sendRequest'])->name('friends.send');
+            Route::post('/{user}/accept', [FriendsController::class, 'accept'])->name('friends.accept');
+            Route::delete('/{user}/decline', [FriendsController::class, 'decline'])->name('friends.decline');
+            Route::delete('/{user}', [FriendsController::class, 'remove'])->name('friends.remove');
+        });
 
         // Products & Price Alerts
         Route::prefix('products')->group(function () {

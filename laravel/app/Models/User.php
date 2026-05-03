@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -55,5 +56,15 @@ class User extends Authenticatable
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class)->withTimestamps();
+    }
+
+    public function friends(): HasMany
+    {
+        return $this->hasMany(\App\Models\Friendship::class, 'user_id');
+    }
+
+    public function receivedRequests(): HasMany
+    {
+        return $this->hasMany(\App\Models\Friendship::class, 'friend_id');
     }
 }
