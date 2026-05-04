@@ -25,4 +25,9 @@ class ProductFilter extends BaseFilter
             default => $this->query,
         };
     }
+
+    public function search(string $search): Builder
+    {
+        return $this->query->where('products.name', 'LIKE', '%' . $search . '%');
+    }
 }

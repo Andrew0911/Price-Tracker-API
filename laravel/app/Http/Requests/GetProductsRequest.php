@@ -37,7 +37,12 @@ class GetProductsRequest extends ApiBaseRequest
             'available' => [
                 'nullable',
                 'integer'
-            ]
+            ],
+            'search' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
         ];
     }
 }
