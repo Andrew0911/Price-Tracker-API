@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FriendsController;
+use App\Http\Controllers\MessagesController;
 use App\Http\Controllers\PriceAlertController;
 use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
@@ -43,6 +44,13 @@ Route::middleware(['throttle:api'])->group(function () {
 
             Route::post('/{product}/alerts', [PriceAlertController::class, 'store'])->name('products.alerts.store');
             Route::delete('/{product}/alerts/{alert}', [PriceAlertController::class, 'destroy'])->name('products.alerts.destroy');
+        });
+
+        // Messages
+        Route::prefix('messages')->group(function () {
+            Route::get('/unread-counts', [MessagesController::class, 'unreadCounts'])->name('messages.unread_counts');
+            Route::get('/{user}', [MessagesController::class, 'index'])->name('messages.index');
+            Route::post('/{user}', [MessagesController::class, 'store'])->name('messages.store');
         });
 
     });

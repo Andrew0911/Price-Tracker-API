@@ -7,7 +7,10 @@ class DeleteAccountRequest extends ApiBaseRequest
     public function rules(): array
     {
         return [
-            'password' => ['required', 'string'],
+            'password' => [
+                'required',
+                'string'
+            ],
         ];
     }
 }
