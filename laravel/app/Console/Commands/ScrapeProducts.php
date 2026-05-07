@@ -26,6 +26,12 @@ class ScrapeProducts extends Command
             ->select('id')
             ->cursor();
 
+        // TEST SCRAPE
+        // $products = Product::query()
+        //     ->where('id', 15)
+        //     ->select('id')
+        //     ->cursor();
+                
         foreach ($products as $product) {
             ScrapeProductJob::dispatch($product->id)->onQueue('cron-scraping');
             $count++;

@@ -27,6 +27,12 @@ class ScrapeProductJob implements ShouldQueue
         }
 
         $result = $scraper->scrape($product->url);
+
+        // TEST ALERT EMAIL
+        // if($product->id == 15){
+        //     $result['price'] = 27999.99;
+        // }
+
         $now = now();
 
         $priceChanged = (float) $product->current_price !== (float) $result['price'];
