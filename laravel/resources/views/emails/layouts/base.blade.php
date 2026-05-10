@@ -27,7 +27,7 @@
                             <table width="100%" cellpadding="0" cellspacing="0" border="0">
                                 <tr>
                                     <td align="center">
-                                        <span style="display:inline-block;background-color:rgba(255,255,255,0.15);border-radius:50%;width:48px;height:48px;line-height:48px;text-align:center;font-size:22px;margin-bottom:12px;">📈</span>
+                                        <img src="{{ $message->embed(public_path('images/price-pulse-logo.png')) }}" alt="Price Pulse" width="72" style="display:block;width:72px;height:auto;background-color:transparent;border-radius:8px;padding:8px;margin:0 auto 8px;" />
                                     </td>
                                 </tr>
                                 <tr>
