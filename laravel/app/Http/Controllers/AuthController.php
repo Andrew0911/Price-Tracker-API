@@ -30,7 +30,7 @@ class AuthController extends BaseController
             'email_verification_token_expires_at' => now()->addHours(24),
         ]);
 
-        $verificationUrl = config('app.url') . '/api/verify-email?token=' . $verificationToken . '&email=' . urlencode($user->email);
+        $verificationUrl = 'https://pricepulse.ro/api/verify-email?token=' . $verificationToken . '&email=' . urlencode($user->email);
 
         Mail::to($request->email)
             ->locale(app()->getLocale())
