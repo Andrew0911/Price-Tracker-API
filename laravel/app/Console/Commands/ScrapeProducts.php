@@ -16,11 +16,11 @@ class ScrapeProducts extends Command
     {
         $count = 0;
 
-        $timeThreshold = now()->subHour();
+        $timeThreshold = now()->subHours(8);
 
         // Check products that haven't been cheked for over than an hour
         $products = Product::query()
-            ->where('last_checked_at', '<', $timeThreshold)
+            ->where('last_checked_at', '<=', $timeThreshold)
             ->orWhereNull('last_checked_at')
             ->limit(5000) // Batches of 5000 to protect the queue
             ->select('id')

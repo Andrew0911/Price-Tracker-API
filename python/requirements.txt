@@ -5,3 +5,4 @@ pymysql==1.1.0
 cryptography==42.0.2
 requests==2.31.0
 beautifulsoup4==4.12.3
+curl_cffi==0.7.1

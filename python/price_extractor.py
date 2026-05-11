@@ -16,7 +16,7 @@ CURRENCY_MAPPING = {
 }
 
 def normalize_price_string(text: str) -> str:
-    """Normalize European price format (6.129,99) to standard float string (6129.99)."""
+    #Normalize European price format (6.129,99) to standard float string (6129.99).
     # Keep only digits, dots and commas
     cleaned = re.sub(r'[^\d.,]', '', text.strip())
 

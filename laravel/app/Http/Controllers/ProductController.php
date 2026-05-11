@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\StoreEnum;
 use App\Filters\ProductFilter;
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\GetProductsRequest;
@@ -30,6 +31,13 @@ class ProductController extends BaseController
     public function store(StoreProductRequest $request): JsonResponse
     {
         $user = $request->user();
+
+        $domain = strtolower(parse_url($request->url, PHP_URL_HOST));
+        $proxiedDomains = StoreEnum::requiredProxyDomains();
+
+        if(!$user->is_admin && in_array($domain, $proxiedDomains)){
+            return $this->sendFailResponse('You do not have permission to add a product from this store');
+        }
 
         $alreadyTracked = $user->products()->where('url', $request->url)->exists();
         if ($alreadyTracked) {

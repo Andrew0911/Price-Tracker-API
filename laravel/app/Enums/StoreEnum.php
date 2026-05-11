@@ -11,4 +11,15 @@ enum StoreEnum: string
     case Vexio = 'vexio';
     case Istyle = 'istyle';
     case Pcgarage = 'pcgarage';
+
+    public static function requiredProxyDomains(): array
+    {
+        return [
+            'emag.ro',
+            'www.emag.ro',
+            'altex.ro',
+            'www.altex.ro'
+        ];
+    }
 }
+

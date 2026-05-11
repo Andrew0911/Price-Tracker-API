@@ -3,6 +3,12 @@ from typing import Dict, Optional
 from .base import BaseScraper
 
 class AltexScraper(BaseScraper):
+
+    # THIS SCRAPER USES PROXY
+    def __init__(self):
+        super().__init__()
+        self.requires_proxy = True
+
     def extract_product_data(self, soup: BeautifulSoup) -> Dict[str, Optional[str]]:
         # Look for the red price (actual price), not the PRP
 

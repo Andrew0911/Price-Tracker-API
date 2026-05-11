@@ -35,7 +35,9 @@ services:
     volumes:
       - ./python:/app # Montăm codul pentru hot-reloading
     environment:
-      - DATABASE_URL=mysql+pymysql://admin:secret@mysql:3306/price_tracker
+      - DATABASE_URL=mysql+pymysql://${DB_USER}:${DB_PASSWORD}@mysql:3306/${DB_DATABASE}
+      - PROXY_URL=${PROXY_URL}
+      - PROXY_ENV=${PROXY_ENV}
     depends_on:
       - mysql
       - redis
@@ -46,10 +48,10 @@ services:
     container_name: mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: price_tracker
-      MYSQL_USER: admin
-      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
     ports:
       - "3307:3306"
     volumes:
