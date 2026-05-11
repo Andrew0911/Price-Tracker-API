@@ -22,6 +22,7 @@ class ScrapeProducts extends Command
         $products = Product::query()
             ->where('last_checked_at', '<=', $timeThreshold)
             ->orWhereNull('last_checked_at')
+            ->has('users') // Scrape only products with at least one user associated
             ->limit(5000) // Batches of 5000 to protect the queue
             ->select('id')
             ->cursor();

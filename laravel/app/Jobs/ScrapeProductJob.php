@@ -73,7 +73,10 @@ class ScrapeProductJob implements ShouldQueue
     public function failed(Throwable $e): void
     {
         Product::where('id', $this->productId)
-            ->update(['scrape_error' => 'Product unavailable']);
+            ->update([
+                'scrape_error' => 'Product unavailable',
+                'last_checked_at' => now(),
+            ]);
 
         Log::error("ScrapeProductJob failed for product #{$this->productId}", [
             'error' => $e->getMessage(),
