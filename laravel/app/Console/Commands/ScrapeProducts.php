@@ -18,11 +18,14 @@ class ScrapeProducts extends Command
 
         $timeThreshold = now()->subHours(8);
 
-        // Check products that haven't been cheked for over than an hour
+        // Select first 5000 products that have at least one user
+        // and that haven't been checked for at least 8 hours
         $products = Product::query()
-            ->where('last_checked_at', '<=', $timeThreshold)
-            ->orWhereNull('last_checked_at')
-            ->has('users') // Scrape only products with at least one user associated
+            ->where(function ($query) use ($timeThreshold) {
+                $query->where('last_checked_at', '<=', $timeThreshold)
+                      ->orWhereNull('last_checked_at');
+            })
+            ->whereHas('users') // ensure product has at least one associated user
             ->limit(5000) // Batches of 5000 to protect the queue
             ->select('id')
             ->cursor();
