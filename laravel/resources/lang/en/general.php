@@ -12,7 +12,7 @@ return [
     'loginSuccessful' => 'Login successful',
     'logoutSuccessful' => 'Logged out successfully',
     'not_allowed' => 'Not allowed',
-    'passwordRequirements' => 'Password must be at least 8 characters and include one lowercase letter, one uppercase letter, one number and one special character',
+    'passwordRequirements' => 'Password must be at least 8 characters, include one lowercase letter, one uppercase letter, one number and one special character, and contain no spaces',
     'passwordConfirmationMismatch' => 'Password confirmation does not match',
     'emailAlreadyExists' => 'The email has already been taken',
 ];
