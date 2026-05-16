@@ -27,6 +27,7 @@ class FriendsController extends BaseController
         }
 
         $query = User::where('id', '!=', $authUser->id)
+            ->where('is_admin', false)
             ->select('id', 'name', 'email');
 
         if ($search) {
@@ -77,8 +78,11 @@ class FriendsController extends BaseController
         $friends = $request->user()
             ->friends()
             ->where('status', Friendship::STATUS_ACCEPTED)
-            ->with('friend:id,name,email')
+            ->with(['friend' => fn ($query) => $query
+                ->select('id', 'name', 'email')
+                ->where('is_admin', false)])
             ->get()
+            ->filter(fn ($f) => $f->friend !== null)
             ->map(fn($f) => ['id' => $f->friend->id, 'name' => $f->friend->name, 'email' => $f->friend->email]);
 
         return $this->sendSuccessResponse(data: $friends);
@@ -100,8 +104,11 @@ class FriendsController extends BaseController
         $incoming = $request->user()
             ->receivedRequests()
             ->where('status', Friendship::STATUS_PENDING)
-            ->with('user:id,name,email')
+            ->with(['user' => fn ($query) => $query
+                ->select('id', 'name', 'email')
+                ->where('is_admin', false)])
             ->get()
+            ->filter(fn ($f) => $f->user !== null)
             ->map(fn($f) => ['id' => $f->user->id, 'name' => $f->user->name, 'email' => $f->user->email]);
 
         return $this->sendSuccessResponse(data: $incoming);
