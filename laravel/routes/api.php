@@ -14,7 +14,10 @@ Route::middleware(['throttle:api'])->group(function () {
 
     Route::post('register', [AuthController::class, 'register'])->name('register');
     Route::post('login', [AuthController::class, 'login'])->name('login');
-    Route::get('verify-email', [AuthController::class, 'verifyEmail'])->name('verify.email');
+    Route::post('forgot-password', [AuthController::class, 'forgotPassword'])->name('password.email');
+    Route::post('reset-password/validate', [AuthController::class, 'validateResetPasswordToken'])->name('password.validate');
+    Route::post('reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
+    Route::post('verify-email', [AuthController::class, 'verifyEmail'])->name('verify.email');
 
     // Protected routes - require Sanctum authentication
     Route::middleware('auth:sanctum')->group(function () {

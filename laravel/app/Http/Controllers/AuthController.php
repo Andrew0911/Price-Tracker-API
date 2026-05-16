@@ -6,13 +6,18 @@ use App\Http\Controllers\BaseController;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\DeleteAccountRequest;
+use App\Http\Requests\ForgotPasswordRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Http\Requests\ResetPasswordRequest;
+use App\Http\Requests\ValidateResetPasswordTokenRequest;
+use App\Http\Requests\VerifyEmailRequest;
 use App\Mail\RegisterEmail;
+use App\Mail\ResetPasswordEmail;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Mail;
 use Symfony\Component\HttpFoundation\Response;
@@ -31,7 +36,10 @@ class AuthController extends BaseController
             'email_verification_token_expires_at' => now()->addHours(24),
         ]);
 
-        $verificationUrl = 'https://pricepulse.ro/api/verify-email?token=' . $verificationToken . '&email=' . urlencode($user->email);
+        $verificationUrl = rtrim(env('FRONTEND_URL'), '/') . '/verify-email?token='
+            . urlencode($verificationToken)
+            . '&email='
+            . urlencode($user->email);
 
         Mail::to($request->email)
             ->locale(app()->getLocale())
@@ -40,26 +48,24 @@ class AuthController extends BaseController
         return $this->sendSuccessResponse(__('general.registrationSuccessful'));
     }
 
-    public function verifyEmail(Request $request): RedirectResponse
+    public function verifyEmail(VerifyEmailRequest $request): JsonResponse
     {
-        $token = $request->query('token');
-        $email = $request->query('email');
-        $loginUrl = env('FRONTEND_URL') . '/login';
-
-        if (!$token || !$email) {
-            return redirect($loginUrl . '?verified=0&error=invalid_token');
-        }
-
-        $user = User::where('email', $email)
-            ->where('email_verification_token', $token)
+        $user = User::where('email', $request->email)
+            ->where('email_verification_token', $request->token)
             ->first();
 
         if (!$user) {
-            return redirect($loginUrl . '?verified=0&error=invalid_token');
+            return $this->sendFailResponse(
+                'This verification link is invalid or has already been used.',
+                status: Response::HTTP_UNPROCESSABLE_ENTITY,
+            );
         }
 
         if ($user->email_verification_token_expires_at->isPast()) {
-            return redirect($loginUrl . '?verified=0&error=token_expired');
+            return $this->sendFailResponse(
+                'This verification link has expired.',
+                status: Response::HTTP_UNPROCESSABLE_ENTITY,
+            );
         }
 
         $user->email_verified_at = now();
@@ -67,7 +73,7 @@ class AuthController extends BaseController
         $user->email_verification_token_expires_at = null;
         $user->save();
 
-        return redirect($loginUrl . '?verified=1');
+        return $this->sendSuccessResponse('Email verified successfully.');
     }
 
     public function login(LoginRequest $request): JsonResponse
@@ -94,6 +100,66 @@ class AuthController extends BaseController
             'tokenType' => 'Bearer',
             'expiresAt' => $expiresAt->toIso8601String()
         ]);
+    }
+
+    public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
+    {
+        $user = User::where('email', $request->email)->first();
+
+        if ($user) {
+            $token = Password::broker()->createToken($user);
+            $resetUrl = rtrim(env('FRONTEND_URL'), '/') . '/reset-password?token='
+                . urlencode($token)
+                . '&email='
+                . urlencode($user->email);
+
+            Mail::to($user->email)
+                ->locale(app()->getLocale())
+                ->send(new ResetPasswordEmail([
+                    'reset_url' => $resetUrl,
+                ])->onQueue('emails'));
+        }
+
+        return $this->sendSuccessResponse(
+            'If an account exists for that email, a password reset link has been sent.'
+        );
+    }
+
+    public function validateResetPasswordToken(ValidateResetPasswordTokenRequest $request): JsonResponse
+    {
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user || !Password::broker()->tokenExists($user, $request->token)) {
+            return $this->sendFailResponse(
+                'This password reset link is invalid or has expired.',
+                status: Response::HTTP_UNPROCESSABLE_ENTITY,
+            );
+        }
+
+        return $this->sendSuccessResponse();
+    }
+
+    public function resetPassword(ResetPasswordRequest $request): JsonResponse
+    {
+        $status = Password::broker()->reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function (User $user, string $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password),
+                ])->save();
+
+                $user->tokens()->delete();
+            }
+        );
+
+        if ($status !== Password::PASSWORD_RESET) {
+            return $this->sendFailResponse(
+                'This password reset link is invalid or has expired.',
+                status: Response::HTTP_UNPROCESSABLE_ENTITY,
+            );
+        }
+
+        return $this->sendSuccessResponse('Password reset successfully.');
     }
 
     public function logout(): JsonResponse
