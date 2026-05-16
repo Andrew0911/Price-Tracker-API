@@ -147,10 +147,11 @@ class MessagesController extends BaseController
     {
         return Friendship::where('status', Friendship::STATUS_ACCEPTED)
             ->where(function ($q) use ($a, $b) {
-                $q->where('user_id', $a->id)->where('friend_id', $b->id);
-            })
-            ->orWhere(function ($q) use ($a, $b) {
-                $q->where('user_id', $b->id)->where('friend_id', $a->id);
+                $q->where(function ($inner) use ($a, $b) {
+                    $inner->where('user_id', $a->id)->where('friend_id', $b->id);
+                })->orWhere(function ($inner) use ($a, $b) {
+                    $inner->where('user_id', $b->id)->where('friend_id', $a->id);
+                });
             })
             ->exists();
     }

@@ -6,6 +6,7 @@ use App\Models\Friendship;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
 class FriendsController extends BaseController
@@ -48,9 +49,17 @@ class FriendsController extends BaseController
         $received = $authUser->receivedRequests()->pluck('status', 'user_id');
 
         $users = $query->orderBy('name')->get()->map(function (User $u) use ($sent, $received) {
-            if (($s = $sent->get($u->id)) !== null) {
-                $status = $s === Friendship::STATUS_ACCEPTED ? 'accepted' : 'pending_sent';
-            } elseif (($r = $received->get($u->id)) !== null && $r === Friendship::STATUS_PENDING) {
+            $sentStatus = $sent->get($u->id);
+            $receivedStatus = $received->get($u->id);
+
+            if (
+                $sentStatus === Friendship::STATUS_ACCEPTED
+                || $receivedStatus === Friendship::STATUS_ACCEPTED
+            ) {
+                $status = 'accepted';
+            } elseif ($sentStatus === Friendship::STATUS_PENDING) {
+                $status = 'pending_sent';
+            } elseif ($receivedStatus === Friendship::STATUS_PENDING) {
                 $status = 'pending_received';
             } else {
                 $status = 'none';
@@ -75,15 +84,32 @@ class FriendsController extends BaseController
             );
         }
 
-        $friends = $request->user()
-            ->friends()
+        $authUser = $request->user();
+
+        $acceptedFriendIds = Friendship::query()
             ->where('status', Friendship::STATUS_ACCEPTED)
-            ->with(['friend' => fn ($query) => $query
-                ->select('id', 'name', 'email')
-                ->where('is_admin', false)])
+            ->where(function ($query) use ($authUser) {
+                $query->where('user_id', $authUser->id)
+                    ->orWhere('friend_id', $authUser->id);
+            })
             ->get()
-            ->filter(fn ($f) => $f->friend !== null)
-            ->map(fn($f) => ['id' => $f->friend->id, 'name' => $f->friend->name, 'email' => $f->friend->email]);
+            ->map(fn (Friendship $friendship) => $friendship->user_id === $authUser->id
+                ? $friendship->friend_id
+                : $friendship->user_id)
+            ->unique()
+            ->values();
+
+        $friends = User::query()
+            ->whereIn('id', $acceptedFriendIds)
+            ->where('is_admin', false)
+            ->select('id', 'name', 'email')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (User $friend) => [
+                'id' => $friend->id,
+                'name' => $friend->name,
+                'email' => $friend->email,
+            ]);
 
         return $this->sendSuccessResponse(data: $friends);
     }
@@ -133,7 +159,18 @@ class FriendsController extends BaseController
             return $this->sendFailResponse('You cannot add yourself as a friend.', status: Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        if ($authUser->friends()->where('friend_id', $user->id)->exists()) {
+        $existingFriendship = Friendship::query()
+            ->where(function ($query) use ($authUser, $user) {
+                $query->where('user_id', $authUser->id)
+                    ->where('friend_id', $user->id);
+            })
+            ->orWhere(function ($query) use ($authUser, $user) {
+                $query->where('user_id', $user->id)
+                    ->where('friend_id', $authUser->id);
+            })
+            ->exists();
+
+        if ($existingFriendship) {
             return $this->sendFailResponse('Friend request already sent or already friends.', status: Response::HTTP_CONFLICT);
         }
 
@@ -160,22 +197,32 @@ class FriendsController extends BaseController
                 status: Response::HTTP_FORBIDDEN,
             );
         }
-        $friendship = Friendship::where('user_id', $user->id)
-            ->where('friend_id', $authUser->id)
-            ->where('status', Friendship::STATUS_PENDING)
-            ->first();
+        $accepted = DB::transaction(function () use ($authUser, $user): bool {
+            $friendship = Friendship::where('user_id', $user->id)
+                ->where('friend_id', $authUser->id)
+                ->where('status', Friendship::STATUS_PENDING)
+                ->lockForUpdate()
+                ->first();
 
-        if (!$friendship) {
+            if (!$friendship) {
+                return false;
+            }
+
+            $friendship->update(['status' => Friendship::STATUS_ACCEPTED]);
+
+            // Keep the pair symmetric even if a reverse pending row already exists
+            // from an earlier send/cancel/re-send sequence.
+            Friendship::updateOrCreate(
+                ['user_id' => $authUser->id, 'friend_id' => $user->id],
+                ['status'  => Friendship::STATUS_ACCEPTED]
+            );
+
+            return true;
+        });
+
+        if (!$accepted) {
             return $this->sendFailResponse('No pending friend request found.', status: Response::HTTP_NOT_FOUND);
         }
-
-        $friendship->update(['status' => Friendship::STATUS_ACCEPTED]);
-
-        // Create the reverse row so both users see each other in their friends list
-        Friendship::firstOrCreate(
-            ['user_id' => $authUser->id, 'friend_id' => $user->id],
-            ['status'  => Friendship::STATUS_ACCEPTED]
-        );
 
         return $this->sendSuccessResponse('Friend request accepted.');
     }

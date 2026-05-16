@@ -65,7 +65,13 @@ class BaseScraper:
             impersonate="chrome124" # Added: This handles the TLS fingerprinting to bypass Cloudflare
         )
         
-        # Raise an HTTP error if the status is not 200 (e.g., 500, 404, 511)
+        # A real 404 from the store means the product page no longer exists.
+        # Surface that as a user-facing "not found" condition instead of a
+        # generic scraper failure.
+        if response.status_code == 404:
+            raise ValueError("Product not found.")
+
+        # Raise an HTTP error if the status is not 200 (e.g., 500, 511)
         if response.status_code != 200:
             raise Exception(f"HTTP Error {response.status_code} while trying to fetch {url}")
         
