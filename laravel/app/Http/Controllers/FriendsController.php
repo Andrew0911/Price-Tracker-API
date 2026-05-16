@@ -19,11 +19,27 @@ class FriendsController extends BaseController
         $authUser = $request->user();
         $search   = $request->query('search');
 
-        $query = User::where('id', '!=', $authUser->id)->select('id', 'name', 'email');
+        if ($authUser->is_admin) {
+            return $this->sendFailResponse(
+                'Admin accounts cannot use social features.',
+                status: Response::HTTP_FORBIDDEN,
+            );
+        }
+
+        $query = User::where('id', '!=', $authUser->id)
+            ->select('id', 'name', 'email');
 
         if ($search) {
-            $like = '%' . $search . '%';
-            $query->where(fn($q) => $q->where('name', 'like', $like)->orWhere('email', 'like', $like));
+            $query->where('email', $search);
+        } else {
+            $acceptedFriendIds = $authUser->friends()
+                ->where('status', Friendship::STATUS_ACCEPTED)
+                ->pluck('friend_id');
+
+            $query->where(function ($q) use ($acceptedFriendIds) {
+                $q->where('private_account', false)
+                    ->orWhereIn('id', $acceptedFriendIds);
+            });
         }
 
         // Keyed collections for O(1) lookup
@@ -51,6 +67,13 @@ class FriendsController extends BaseController
      */
     public function index(Request $request): JsonResponse
     {
+        if ($request->user()->is_admin) {
+            return $this->sendFailResponse(
+                'Admin accounts cannot use social features.',
+                status: Response::HTTP_FORBIDDEN,
+            );
+        }
+
         $friends = $request->user()
             ->friends()
             ->where('status', Friendship::STATUS_ACCEPTED)
@@ -67,6 +90,13 @@ class FriendsController extends BaseController
      */
     public function requests(Request $request): JsonResponse
     {
+        if ($request->user()->is_admin) {
+            return $this->sendFailResponse(
+                'Admin accounts cannot use social features.',
+                status: Response::HTTP_FORBIDDEN,
+            );
+        }
+
         $incoming = $request->user()
             ->receivedRequests()
             ->where('status', Friendship::STATUS_PENDING)
@@ -84,6 +114,13 @@ class FriendsController extends BaseController
     public function sendRequest(Request $request, User $user): JsonResponse
     {
         $authUser = $request->user();
+
+        if ($authUser->is_admin || $user->is_admin) {
+            return $this->sendFailResponse(
+                'Admin accounts cannot use social features.',
+                status: Response::HTTP_FORBIDDEN,
+            );
+        }
 
         if ($authUser->id === $user->id) {
             return $this->sendFailResponse('You cannot add yourself as a friend.', status: Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -109,6 +146,13 @@ class FriendsController extends BaseController
     public function accept(Request $request, User $user): JsonResponse
     {
         $authUser   = $request->user();
+
+        if ($authUser->is_admin || $user->is_admin) {
+            return $this->sendFailResponse(
+                'Admin accounts cannot use social features.',
+                status: Response::HTTP_FORBIDDEN,
+            );
+        }
         $friendship = Friendship::where('user_id', $user->id)
             ->where('friend_id', $authUser->id)
             ->where('status', Friendship::STATUS_PENDING)
@@ -135,6 +179,13 @@ class FriendsController extends BaseController
      */
     public function decline(Request $request, User $user): JsonResponse
     {
+        if ($request->user()->is_admin || $user->is_admin) {
+            return $this->sendFailResponse(
+                'Admin accounts cannot use social features.',
+                status: Response::HTTP_FORBIDDEN,
+            );
+        }
+
         $request->user()
             ->receivedRequests()
             ->where('user_id', $user->id)
@@ -151,6 +202,13 @@ class FriendsController extends BaseController
     public function remove(Request $request, User $user): JsonResponse
     {
         $authUser = $request->user();
+
+        if ($authUser->is_admin || $user->is_admin) {
+            return $this->sendFailResponse(
+                'Admin accounts cannot use social features.',
+                status: Response::HTTP_FORBIDDEN,
+            );
+        }
 
         Friendship::where(function ($q) use ($authUser, $user) {
             $q->where('user_id', $authUser->id)->where('friend_id', $user->id);

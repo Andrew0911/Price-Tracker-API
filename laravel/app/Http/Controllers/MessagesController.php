@@ -21,6 +21,13 @@ class MessagesController extends BaseController
     {
         $authUser = $request->user();
 
+        if ($authUser->is_admin || $user->is_admin) {
+            return $this->sendFailResponse(
+                'Admin accounts cannot use messaging.',
+                status: Response::HTTP_FORBIDDEN,
+            );
+        }
+
         if (!$this->areFriends($authUser, $user)) {
             return $this->sendFailResponse('You can only message friends.', status: Response::HTTP_FORBIDDEN);
         }
@@ -59,6 +66,13 @@ class MessagesController extends BaseController
     {
         $authUser = $request->user();
 
+        if ($authUser->is_admin) {
+            return $this->sendFailResponse(
+                'Admin accounts cannot use messaging.',
+                status: Response::HTTP_FORBIDDEN,
+            );
+        }
+
         $counts = Message::where('receiver_id', $authUser->id)
             ->whereNull('read_at')
             ->selectRaw('sender_id, COUNT(*) as cnt')
@@ -78,6 +92,13 @@ class MessagesController extends BaseController
     public function store(SendMessageRequest $request, User $user): JsonResponse
     {
         $authUser = $request->user();
+
+        if ($authUser->is_admin || $user->is_admin) {
+            return $this->sendFailResponse(
+                'Admin accounts cannot use messaging.',
+                status: Response::HTTP_FORBIDDEN,
+            );
+        }
 
         if ($authUser->id === $user->id) {
             return $this->sendFailResponse('You cannot message yourself.', status: Response::HTTP_UNPROCESSABLE_ENTITY);

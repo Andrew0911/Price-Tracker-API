@@ -26,6 +26,7 @@ class User extends Authenticatable
         'password',
         'email_verification_token',
         'email_verification_token_expires_at',
+        'private_account',
     ];
 
     /**
@@ -50,6 +51,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'email_verification_token_expires_at' => 'datetime',
             'password' => 'hashed',
+            'is_admin' => 'boolean',
+            'private_account' => 'boolean',
         ];
     }
 

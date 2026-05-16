@@ -6,6 +6,7 @@ use App\Http\Controllers\BaseController;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\DeleteAccountRequest;
+use App\Http\Requests\UpdateUserRequest;
 use App\Mail\RegisterEmail;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -105,6 +106,27 @@ class AuthController extends BaseController
     public function user(): JsonResponse
     {
        return $this->sendSuccessResponse(data: auth('sanctum')->user());
+    }
+
+    public function updateUser(UpdateUserRequest $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->is_admin) {
+            return $this->sendFailResponse(
+                'Admin accounts must remain private.',
+                status: Response::HTTP_FORBIDDEN,
+            );
+        }
+
+        $user->update([
+            'private_account' => $request->boolean('private_account'),
+        ]);
+
+        return $this->sendSuccessResponse(
+            message: 'Account settings updated successfully.',
+            data: $user->fresh(),
+        );
     }
 
     public function deleteAccount(DeleteAccountRequest $request): JsonResponse

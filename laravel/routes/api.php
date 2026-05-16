@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AdminUsersController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FriendsController;
 use App\Http\Controllers\MessagesController;
@@ -19,7 +20,15 @@ Route::middleware(['throttle:api'])->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [AuthController::class, 'logout'])->name('logout');
         Route::get('user', [AuthController::class, 'user'])->name('user');
+        Route::patch('user', [AuthController::class, 'updateUser'])->name('user.update');
         Route::delete('account', [AuthController::class, 'deleteAccount'])->name('account.delete');
+
+        // Admin users management
+        Route::prefix('admin/users')->group(function () {
+            Route::get('/', [AdminUsersController::class, 'index'])->name('admin.users.index');
+            Route::get('/{user}', [AdminUsersController::class, 'show'])->name('admin.users.show');
+            Route::delete('/{user}', [AdminUsersController::class, 'destroy'])->name('admin.users.destroy');
+        });
 
         // Dashboard
         Route::get('dashboard/stats', [DashboardController::class, 'stats'])->name('dashboard.stats');
