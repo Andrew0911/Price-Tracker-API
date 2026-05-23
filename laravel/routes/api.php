@@ -30,6 +30,7 @@ Route::middleware(['throttle:api'])->group(function () {
         Route::prefix('admin/users')->group(function () {
             Route::get('/', [AdminUsersController::class, 'index'])->name('admin.users.index');
             Route::get('/{user}', [AdminUsersController::class, 'show'])->name('admin.users.show');
+            Route::patch('/{user}/promote', [AdminUsersController::class, 'promote'])->name('admin.users.promote');
             Route::delete('/{user}', [AdminUsersController::class, 'destroy'])->name('admin.users.destroy');
         });
 

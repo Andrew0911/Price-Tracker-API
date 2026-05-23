@@ -40,6 +40,36 @@ class AdminUsersController extends BaseController
         return $this->sendSuccessResponse(data: $user);
     }
 
+    public function promote(Request $request, User $user): JsonResponse
+    {
+        $authUser = $request->user();
+
+        if (!$authUser->is_admin) {
+            return $this->sendErrorResponse(status: Response::HTTP_FORBIDDEN);
+        }
+
+        if ($authUser->id === $user->id) {
+            return $this->sendFailResponse(
+                'You are already an admin.',
+                status: Response::HTTP_UNPROCESSABLE_ENTITY,
+            );
+        }
+
+        if ($user->is_admin) {
+            return $this->sendSuccessResponse(
+                message: 'User is already an admin.',
+                data: $user->only(['id', 'name', 'email', 'email_verified_at', 'private_account', 'is_admin', 'created_at']),
+            );
+        }
+
+        $user->forceFill(['is_admin' => true])->save();
+
+        return $this->sendSuccessResponse(
+            message: 'User promoted to admin successfully.',
+            data: $user->fresh()->only(['id', 'name', 'email', 'email_verified_at', 'private_account', 'is_admin', 'created_at']),
+        );
+    }
+
     public function destroy(Request $request, User $user): JsonResponse
     {
         $authUser = $request->user();

@@ -74,6 +74,7 @@ class MessagesController extends BaseController
         }
 
         $counts = Message::where('receiver_id', $authUser->id)
+            ->whereHas('sender', fn ($query) => $query->where('is_admin', false))
             ->whereNull('read_at')
             ->selectRaw('sender_id, COUNT(*) as cnt')
             ->groupBy('sender_id')

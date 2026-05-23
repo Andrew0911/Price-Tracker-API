@@ -56,6 +56,28 @@ class User extends Authenticatable
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::updated(function (User $user): void {
+            if (!$user->wasChanged('is_admin') || !$user->is_admin) {
+                return;
+            }
+
+            Friendship::query()
+                ->where('user_id', $user->id)
+                ->orWhere('friend_id', $user->id)
+                ->delete();
+
+            Message::query()
+                ->where(function ($query) use ($user) {
+                    $query->where('sender_id', $user->id)
+                        ->orWhere('receiver_id', $user->id);
+                })
+                ->whereNull('read_at')
+                ->update(['read_at' => now()]);
+        });
+    }
+
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class)->withTimestamps();
