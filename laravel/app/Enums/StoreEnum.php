@@ -15,6 +15,7 @@ enum StoreEnum: string
     case Modivo = 'modivo';
     case Aboutyou = 'aboutyou';
     case Fashiondays = 'fashiondays';
+    case Dummy = 'dummy';
 
     public static function requiredProxyDomains(): array
     {

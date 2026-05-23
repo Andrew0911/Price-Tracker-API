@@ -10,6 +10,7 @@ from .answear_scraper import AnswearScraper
 from .modivo_scraper import ModivoScraper
 from .about_you_scraper import AboutYouScraper
 from .fashion_days_scraper import FashionDaysScraper
+from .dummy_store_scraper import DummyStoreScraper
 
 SCRAPER_REGISTRY = {
     "emag.ro": EmagScraper(),
@@ -33,7 +34,10 @@ SCRAPER_REGISTRY = {
     "www.aboutyou.ro": AboutYouScraper(),
     "aboutyou.ro": AboutYouScraper(),
     "www.fashiondays.ro": FashionDaysScraper(),
-    "fashiondays.ro": FashionDaysScraper()
+    "fashiondays.ro": FashionDaysScraper(),
+    "localhost:3001": DummyStoreScraper(),
+    "127.0.0.1:3001": DummyStoreScraper(),
+    "host.docker.internal:3001": DummyStoreScraper(),
 }
 
 def get_scraper_for_url(url: str):
