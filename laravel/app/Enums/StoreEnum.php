@@ -22,7 +22,13 @@ enum StoreEnum: string
             'emag.ro',
             'www.emag.ro',
             'altex.ro',
-            'www.altex.ro'
+            'www.altex.ro',
+            'pcgarage.ro',
+            'www.pcgarage.ro',
+            'modivo.ro',
+            'www.modivo.ro',
+            'fashiondays.ro',
+            'www.fashiondays.ro',
         ];
     }
 }

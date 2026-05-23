@@ -3,6 +3,10 @@ from typing import Dict, Optional
 from .base import BaseScraper
 
 class PcGarageScraper(BaseScraper):
+    def __init__(self):
+        super().__init__()
+        self.requires_proxy = True
+
     def extract_product_data(self, soup: BeautifulSoup) -> Dict[str, Optional[str]]:
         sell_container = soup.find(id="product_sell_container")
         price_element = sell_container.find("span", class_="price_num") if sell_container else None

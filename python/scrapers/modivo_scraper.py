@@ -5,6 +5,10 @@ from .base import BaseScraper
 
 
 class ModivoScraper(BaseScraper):
+    def __init__(self):
+        super().__init__()
+        self.requires_proxy = True
+
     def extract_product_data(self, soup: BeautifulSoup) -> Dict[str, Optional[str]]:
         brand_element = soup.select_one('[data-test-id="product-name-link"]')
         name_element = soup.select_one('[data-test-id="product-name-details-heading"]')

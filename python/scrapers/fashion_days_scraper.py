@@ -6,6 +6,10 @@ from .base import BaseScraper
 
 
 class FashionDaysScraper(BaseScraper):
+    def __init__(self):
+        super().__init__()
+        self.requires_proxy = True
+
     def extract_product_data(self, soup: BeautifulSoup) -> Dict[str, Optional[str]]:
         brand_element = soup.select_one(".product-brand-name a") or soup.select_one(".product-brand-name")
         name_element = soup.select_one(".product-brand-desc")
