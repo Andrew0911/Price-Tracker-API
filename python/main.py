@@ -22,7 +22,11 @@ def scrape_product(request: ScrapeRequest):
 
     try:
         raw_data = scraper.scrape(url)
-        price, currency = parse_price(raw_data["price_text"])
+        parsed_price = parse_price(raw_data["price_text"])
+        if not parsed_price:
+            raise ValueError("Price not found.")
+
+        price, currency = parsed_price
 
         return {
             "name": raw_data["name"],

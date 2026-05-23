@@ -9,6 +9,17 @@ class StoreProductRequest extends ApiBaseRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if (!$this->filled('url')) {
+            return;
+        }
+
+        $this->merge([
+            'url' => str_replace('|', '%7C', $this->input('url')),
+        ]);
+    }
+
     public function rules(): array
     {
         return [

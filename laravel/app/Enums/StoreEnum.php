@@ -11,6 +11,10 @@ enum StoreEnum: string
     case Vexio = 'vexio';
     case Istyle = 'istyle';
     case Pcgarage = 'pcgarage';
+    case Answear = 'answear';
+    case Modivo = 'modivo';
+    case Aboutyou = 'aboutyou';
+    case Fashiondays = 'fashiondays';
 
     public static function requiredProxyDomains(): array
     {
@@ -22,4 +26,3 @@ enum StoreEnum: string
         ];
     }
 }
-

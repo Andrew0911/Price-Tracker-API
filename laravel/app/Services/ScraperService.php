@@ -28,14 +28,23 @@ class ScraperService
                 'url' => $url,
             ]);
         } catch (ConnectionException $e) {
-            throw new RuntimeException("Scraper service unavailable");
+            throw new RuntimeException('We could not check this product right now. Please try again later.');
         }
 
         if ($response->failed()) {
-            $detail = $response->json('detail') ?? $response->body();
-            throw new RuntimeException($detail);
+            throw new RuntimeException($this->friendlyErrorMessage($response->status()));
         }
 
         return $response->json();
+    }
+
+    private function friendlyErrorMessage(int $status): string
+    {
+        return match ($status) {
+            400 => 'This store is not supported yet.',
+            404 => 'Product not found. Please check the URL and try again.',
+            422 => 'We could not read this product. Please check the URL and try again.',
+            default => 'We could not read this product right now. Please check the URL or try again later.',
+        };
     }
 }
