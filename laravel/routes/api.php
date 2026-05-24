@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AdminProductsController;
 use App\Http\Controllers\AdminUsersController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FriendsController;
@@ -32,6 +33,11 @@ Route::middleware(['throttle:api'])->group(function () {
             Route::get('/{user}', [AdminUsersController::class, 'show'])->name('admin.users.show');
             Route::patch('/{user}/promote', [AdminUsersController::class, 'promote'])->name('admin.users.promote');
             Route::delete('/{user}', [AdminUsersController::class, 'destroy'])->name('admin.users.destroy');
+        });
+
+        Route::prefix('admin/products')->group(function () {
+            Route::get('/', [AdminProductsController::class, 'index'])->name('admin.products.index');
+            Route::delete('/{product}', [AdminProductsController::class, 'destroy'])->name('admin.products.destroy');
         });
 
         // Dashboard
