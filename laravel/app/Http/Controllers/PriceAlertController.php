@@ -25,7 +25,13 @@ class PriceAlertController extends BaseController
             );
         }
 
-        if ((float) $request->target_price >= (float) $product->current_price) {
+        $validated = $request->validated();
+        $type = $validated['type'] ?? PriceAlert::TYPE_TARGET_PRICE;
+
+        if (
+            $type === PriceAlert::TYPE_TARGET_PRICE
+            && (float) $validated['target_price'] >= (float) $product->current_price
+        ) {
             return $this->sendErrorResponse(
                 message: 'The target price must be lower than the current product price.',
                 status: Response::HTTP_UNPROCESSABLE_ENTITY,
@@ -33,8 +39,17 @@ class PriceAlertController extends BaseController
         }
 
         $alert = $product->priceAlerts()->updateOrCreate(
-            ['user_id' => $request->user()->id],
-            ['target_price' => $request->target_price, 'notified_at' => null, 'triggered_at' => null],
+            [
+                'user_id' => $request->user()->id,
+                'type' => $type,
+            ],
+            [
+                'target_price' => $type === PriceAlert::TYPE_TARGET_PRICE
+                    ? $validated['target_price']
+                    : null,
+                'notified_at' => null,
+                'triggered_at' => null,
+            ],
         );
 
         return $this->sendSuccessResponse(data: $alert);

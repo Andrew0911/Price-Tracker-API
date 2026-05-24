@@ -14,7 +14,7 @@ class PriceAlertsMail extends Mailable implements ShouldQueue
 
     /**
      * @param User  $user
-     * @param array $alerts  Array of ['product' => Product, 'alert' => PriceAlert, 'price' => float]
+     * @param array $alerts Array of ['product' => Product, 'alert' => PriceAlert, 'price' => float]
      */
     public function __construct(
         public readonly User $user,
@@ -25,8 +25,8 @@ class PriceAlertsMail extends Mailable implements ShouldQueue
     {
         $count = count($this->alerts);
         $subject = $count === 1
-            ? 'Price drop alert — your target has been reached'
-            : "Price drop alert — {$count} of your targets have been reached";
+            ? 'Price alert - a product needs your attention'
+            : "Price alerts - {$count} products need your attention";
 
         return $this->subject($subject)
             ->view('emails.price-alerts', [

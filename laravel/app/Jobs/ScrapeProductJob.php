@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\PriceAlert;
 use App\Models\Product;
 use App\Services\ScraperService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -34,19 +35,24 @@ class ScrapeProductJob implements ShouldQueue
         // }
 
         $now = now();
+        $previousPrice = $product->current_price !== null
+            ? (float) $product->current_price
+            : null;
+        $newPrice = (float) $result['price'];
 
-        $priceChanged = (float) $product->current_price !== (float) $result['price'];
+        $priceChanged = $previousPrice === null || $previousPrice !== $newPrice;
+        $priceDropped = $previousPrice !== null && $newPrice < $previousPrice;
 
         if ($priceChanged) {
             // If price changed, add history and update current price on product entity
             $product->priceHistory()->create([
-                'price' => $result['price'],
+                'price' => $newPrice,
                 'currency' => $result['currency'],
                 'checked_at' => $now,
             ]);
 
             $product->update([
-                'current_price' => $result['price'],
+                'current_price' => $newPrice,
                 'currency' => $result['currency'],
                 'last_checked_at' => $now,
                 'scrape_error' => null,
@@ -59,15 +65,30 @@ class ScrapeProductJob implements ShouldQueue
             ]);
         }
 
-        // Check active price alerts — mark triggered_at so alerts:notify picks them up
+        // Check active price alerts and mark triggered_at so alerts:notify picks them up.
         $product->priceAlerts()
             ->whereNull('triggered_at')
-            ->where('target_price', '>=', $result['price'])
-            ->each(function ($alert) use ($result, $product, $now) {
+            ->where('type', PriceAlert::TYPE_TARGET_PRICE)
+            ->where('target_price', '>=', $newPrice)
+            ->each(function ($alert) use ($newPrice, $product, $now) {
                 $alert->update(['triggered_at' => $now]);
 
-                Log::info("Price alert triggered for user #{$alert->user_id} product #{$product->id}: {$result['price']} <= {$alert->target_price}");
+                Log::info("Target price alert triggered for user #{$alert->user_id} product #{$product->id}: {$newPrice} <= {$alert->target_price}");
             });
+
+        if ($priceDropped) {
+            $product->priceAlerts()
+                ->whereNull('triggered_at')
+                ->where('type', PriceAlert::TYPE_PRICE_DROP)
+                ->each(function ($alert) use ($previousPrice, $newPrice, $product, $now) {
+                    $alert->update([
+                        'triggered_at' => $now,
+                        'notified_at' => null,
+                    ]);
+
+                    Log::info("Price drop alert triggered for user #{$alert->user_id} product #{$product->id}: {$previousPrice} -> {$newPrice}");
+                });
+        }
     }
 
     public function failed(Throwable $e): void

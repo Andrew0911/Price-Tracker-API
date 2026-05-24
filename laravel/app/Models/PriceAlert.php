@@ -7,11 +7,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PriceAlert extends Model
 {
+    public const TYPE_TARGET_PRICE = 'target_price';
+    public const TYPE_PRICE_DROP = 'price_drop';
+
     protected $table = 'price_alerts';
 
     protected $fillable = [
         'user_id',
         'product_id',
+        'type',
         'target_price',
         'notified_at',
         'triggered_at',

@@ -13,14 +13,14 @@ use Mail;
 class SendPriceAlertNotifications extends Command
 {
     protected $signature = 'alerts:notify';
-    protected $description = 'Send batched price alert emails — one email per user covering all triggered alerts';
+    protected $description = 'Send batched price alert emails, one email per user covering all triggered alerts';
 
     public function handle(): int
     {
         $now = Carbon::now();
         $dispatched = 0;
 
-        // Get only the distinct user IDs that have pending alerts — no bulk load
+        // Get only the distinct user IDs that have pending alerts.
         $userIds = PriceAlert::query()
             ->whereNotNull('triggered_at')
             ->whereNull('notified_at')
@@ -63,7 +63,18 @@ class SendPriceAlertNotifications extends Command
                 ->send(new PriceAlertsMail($user, $alertsPayload)->onQueue('emails'));
 
             // Mark as notified only after mail was sent
-            $alerts->each->update(['notified_at' => $now]);
+            $alerts->each(function (PriceAlert $alert) use ($now) {
+                if ($alert->type === PriceAlert::TYPE_PRICE_DROP) {
+                    $alert->update([
+                        'triggered_at' => null,
+                        'notified_at' => $now,
+                    ]);
+
+                    return;
+                }
+
+                $alert->update(['notified_at' => $now]);
+            });
 
             $dispatched++;
         }
