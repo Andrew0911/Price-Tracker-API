@@ -7,6 +7,7 @@ use App\Filters\ProductFilter;
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\GetProductsRequest;
 use App\Http\Requests\StoreProductRequest;
+use App\Models\PriceAlert;
 use App\Models\Product;
 use App\Repositories\ProductRepository;
 use App\Services\ScraperService;
@@ -84,7 +85,12 @@ class ProductController extends BaseController
 
         $product->load([
             'priceHistory' => fn($q) => $q->orderBy('checked_at')->limit(60),
-            'priceAlerts' => fn($q) => $q->whereNull('triggered_at')->where('user_id', $request->user()->id),
+            'priceAlerts' => fn($q) => $q
+                ->where('user_id', $request->user()->id)
+                ->where(function ($q) {
+                    $q->whereNull('triggered_at')
+                        ->orWhere('type', PriceAlert::TYPE_PRICE_DROP);
+                }),
         ]);
 
         return $this->sendSuccessResponse(data: $product);

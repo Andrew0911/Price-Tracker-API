@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Filters\BaseFilter;
+use App\Models\PriceAlert;
 use App\Models\Product;
 use Illuminate\Pagination\LengthAwarePaginator;
 class ProductRepository extends BaseRepository
@@ -18,7 +19,14 @@ class ProductRepository extends BaseRepository
 
         return auth()->user()
             ->products()
-            ->with(['priceAlerts' => fn($q) => $q->whereNull('triggered_at')->where('user_id', $userId)])
+            ->with([
+                'priceAlerts' => fn($q) => $q
+                    ->where('user_id', $userId)
+                    ->where(function ($q) {
+                        $q->whereNull('triggered_at')
+                            ->orWhere('type', PriceAlert::TYPE_PRICE_DROP);
+                    }),
+            ])
             ->when($filter, fn($query) => $filter->apply($query))
             ->latest('products.created_at')
             ->paginate(request()->integer('perPage', 10))

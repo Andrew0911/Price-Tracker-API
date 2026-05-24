@@ -9,8 +9,8 @@
 
     <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#3d4e5a;">
         Hi {{ $user->name }},
-        {{ count($alerts) === 1 ? 'one product needs' : count($alerts) . ' products need' }}
-        your attention.
+        {{ count($alerts) === 1 ? 'one product has' : count($alerts) . ' products have' }}
+        a price update worth checking.
     </p>
 
     @foreach ($alerts as $item)
@@ -29,6 +29,16 @@
                         {{ $product->name }}
                     </p>
 
+                    <p style="margin:0 0 14px;font-size:14px;line-height:1.5;color:#3d4e5a;">
+                        @if ($isPriceDropAlert)
+                            The price dropped. The new price is
+                            <strong style="color:#3d8a57;">{{ number_format((float) $price, 2) }} {{ $product->currency }}</strong>.
+                        @else
+                            Your target price was reached. The new price is
+                            <strong style="color:#3d8a57;">{{ number_format((float) $price, 2) }} {{ $product->currency }}</strong>.
+                        @endif
+                    </p>
+
                     <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:14px;width:100%;">
                         <tr>
                             <td align="center">
@@ -41,16 +51,12 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <span style="display:block;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#6b8a96;margin-bottom:2px;">
-                                                {{ $isPriceDropAlert ? 'Alert type' : 'Your target' }}
-                                            </span>
-                                            <span style="font-size:22px;font-weight:700;color:#1a1d2e;">
-                                                @if ($isPriceDropAlert)
-                                                    Any price drop
-                                                @else
+                                            @if (! $isPriceDropAlert)
+                                                <span style="display:block;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#6b8a96;margin-bottom:2px;">Your target</span>
+                                                <span style="font-size:22px;font-weight:700;color:#1a1d2e;">
                                                     {{ number_format((float) $alert->target_price, 2) }} {{ $product->currency }}
-                                                @endif
-                                            </span>
+                                                </span>
+                                            @endif
                                         </td>
                                     </tr>
                                 </table>

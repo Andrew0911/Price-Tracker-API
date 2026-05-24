@@ -46,11 +46,21 @@ class SendPriceAlertNotifications extends Command
                 continue;
             }
 
-            $alertsPayload = $alerts->map(fn ($alert) => [
-                'product' => $alert->product,
-                'alert' => $alert,
-                'price' => (float) $alert->product->current_price,
-            ])->values()->all();
+            $alertsPayload = $alerts
+                ->groupBy('product_id')
+                ->map(function ($productAlerts) {
+                    $alert = $productAlerts
+                        ->firstWhere('type', PriceAlert::TYPE_TARGET_PRICE)
+                        ?? $productAlerts->first();
+
+                    return [
+                        'product' => $alert->product,
+                        'alert' => $alert,
+                        'price' => (float) $alert->product->current_price,
+                    ];
+                })
+                ->values()
+                ->all();
 
             $user = User::find($userId);
 
