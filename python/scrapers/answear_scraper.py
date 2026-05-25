@@ -51,23 +51,25 @@ class AnswearScraper(BaseScraper):
     def extract_product_data(self, soup: BeautifulSoup) -> Dict[str, Optional[str]]:
         product_schema = self._get_product_schema(soup)
         brand_element = soup.select_one('[data-test="productBrandLink"]')
-        title_element = self._find_by_class_fragment(soup, "h1", "__detailsTitle__")
-        subtitle_element = self._find_by_class_fragment(soup, "h2", "__detailsSubtitle__")
+        title_element = self._find_by_class_fragment(soup, "span", "__detailsTitle__")
+        subtitle_element = self._find_by_class_fragment(soup, "span", "__detailsSubtitle__")
 
         title = title_element.get_text(" ", strip=True) if title_element else None
         subtitle = subtitle_element.get_text(" ", strip=True) if subtitle_element else None
         brand = brand_element.get_text(" ", strip=True) if brand_element else None
 
-        name_parts = [part for part in (brand, title, subtitle) if part]
+        name_parts = [part for part in (title, subtitle) if part]
+        if brand and not (title and title.lower().startswith(brand.lower())):
+            name_parts.insert(0, brand)
         name = " ".join(name_parts) if name_parts else None
         if not name and product_schema:
             name = product_schema.get("name")
 
         price_element = (
             soup.select_one('[data-test="regularPrice"]')
-            or soup.select_one('[data-test="priceSaleWithMinimalDesktop"]')
             or soup.select_one(".ProductCardStylesProvider__priceSaleMinimal__OIiJM")
             or soup.select_one(".ProductCardStylesProvider__priceRegular__Z3Oi0")
+            or soup.select_one('[data-test="priceSaleWithMinimalDesktop"]')
         )
         price_text = self._schema_price_text(product_schema)
         if not price_text and price_element:
