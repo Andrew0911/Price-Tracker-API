@@ -80,10 +80,10 @@ class DashboardController extends BaseController
         }
 
         usort($topPriceDrops, fn ($a, $b) => $b['drop_amount'] <=> $a['drop_amount']);
-        $topPriceDrops = array_slice($topPriceDrops, 0, 5);
+        $topPriceDrops = array_slice($topPriceDrops, 0, 10);
 
         usort($topPriceIncreases, fn ($a, $b) => $b['increase_amount'] <=> $a['increase_amount']);
-        $topPriceIncreases = array_slice($topPriceIncreases, 0, 5);
+        $topPriceIncreases = array_slice($topPriceIncreases, 0, 10);
 
         arsort($storeBreakdown);
         $storeBreakdown = collect($storeBreakdown)
@@ -91,6 +91,7 @@ class DashboardController extends BaseController
                 'store' => $store,
                 'count' => $count,
             ])
+            ->take(10)
             ->values();
 
         return $this->sendSuccessResponse(data: [

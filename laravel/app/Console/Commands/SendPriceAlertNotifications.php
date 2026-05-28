@@ -56,6 +56,7 @@ class SendPriceAlertNotifications extends Command
                     return [
                         'product' => $alert->product,
                         'alert' => $alert,
+                        'old_price' => $this->previousTriggeredPrice($alert),
                         'price' => (float) $alert->product->current_price,
                     ];
                 })
@@ -92,5 +93,24 @@ class SendPriceAlertNotifications extends Command
         Log::info("Dispatched alert emails for {$dispatched} user(s).");
 
         return self::SUCCESS;
+    }
+
+    private function previousTriggeredPrice(PriceAlert $alert): ?float
+    {
+        if (!$alert->triggered_at || !$alert->product) {
+            return null;
+        }
+
+        $priceBeforeTrigger = $alert->product
+            ->priceHistory()
+            ->where('checked_at', '<=', $alert->triggered_at)
+            ->orderByDesc('checked_at')
+            ->orderByDesc('id')
+            ->skip(1)
+            ->value('price');
+
+        return $priceBeforeTrigger !== null
+            ? (float) $priceBeforeTrigger
+            : null;
     }
 }

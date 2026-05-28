@@ -79,19 +79,23 @@ class ProductController extends BaseController
 
     public function show(Request $request, Product $product): JsonResponse
     {
-        if (!$request->user()->products()->where('products.id', $product->id)->exists()) {
+        $user = $request->user();
+        $isInWishlist = $user->products()->where('products.id', $product->id)->exists();
+
+        if (!$user->is_admin && !$isInWishlist) {
             return $this->sendErrorResponse(status: Response::HTTP_FORBIDDEN);
         }
 
         $product->load([
             'priceHistory' => fn($q) => $q->orderBy('checked_at')->limit(60),
             'priceAlerts' => fn($q) => $q
-                ->where('user_id', $request->user()->id)
+                ->where('user_id', $user->id)
                 ->where(function ($q) {
                     $q->whereNull('triggered_at')
                         ->orWhere('type', PriceAlert::TYPE_PRICE_DROP);
                 }),
         ]);
+        $product->setAttribute('is_in_wishlist', $isInWishlist);
 
         return $this->sendSuccessResponse(data: $product);
     }
@@ -109,4 +113,3 @@ class ProductController extends BaseController
         return $this->sendSuccessResponse();
     }
 }
-

@@ -17,6 +17,7 @@
         @php
             $product = $item['product'];
             $alert = $item['alert'];
+            $oldPrice = $item['old_price'] ?? null;
             $price = $item['price'];
             $isPriceDropAlert = $alert->type === \App\Models\PriceAlert::TYPE_PRICE_DROP;
         @endphp
@@ -31,11 +32,24 @@
 
                     <p style="margin:0 0 14px;font-size:14px;line-height:1.5;color:#3d4e5a;">
                         @if ($isPriceDropAlert)
-                            The price dropped. The new price is
-                            <strong style="color:#3d8a57;">{{ number_format((float) $price, 2) }} {{ $product->currency }}</strong>.
+                            The price dropped
+                            @if ($oldPrice !== null)
+                                from <strong style="color:#6b8a96;">{{ number_format((float) $oldPrice, 2) }} {{ $product->currency }}</strong>
+                                to <strong style="color:#3d8a57;">{{ number_format((float) $price, 2) }} {{ $product->currency }}</strong>.
+                            @else
+                                . The new price is
+                                <strong style="color:#3d8a57;">{{ number_format((float) $price, 2) }} {{ $product->currency }}</strong>.
+                            @endif
                         @else
-                            Your target price was reached. The new price is
-                            <strong style="color:#3d8a57;">{{ number_format((float) $price, 2) }} {{ $product->currency }}</strong>.
+                            Your target price was reached
+                            @if ($oldPrice !== null)
+                                after the price moved from
+                                <strong style="color:#6b8a96;">{{ number_format((float) $oldPrice, 2) }} {{ $product->currency }}</strong>
+                                to <strong style="color:#3d8a57;">{{ number_format((float) $price, 2) }} {{ $product->currency }}</strong>.
+                            @else
+                                . The new price is
+                                <strong style="color:#3d8a57;">{{ number_format((float) $price, 2) }} {{ $product->currency }}</strong>.
+                            @endif
                         @endif
                     </p>
 
@@ -44,20 +58,31 @@
                             <td align="center">
                                 <table cellpadding="0" cellspacing="0" border="0">
                                     <tr>
-                                        <td style="padding-right:24px;">
-                                            <span style="display:block;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#6b8a96;margin-bottom:2px;">Current price</span>
+                                        @if ($oldPrice !== null)
+                                            <td style="padding-right:12px;">
+                                                <span style="display:block;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#6b8a96;margin-bottom:2px;">Old price</span>
+                                                <span style="font-size:22px;font-weight:700;color:#6b8a96;text-decoration:line-through;">
+                                                    {{ number_format((float) $oldPrice, 2) }} {{ $product->currency }}
+                                                </span>
+                                            </td>
+                                            <td style="padding-right:12px;font-size:22px;font-weight:700;color:#6b8a96;">
+                                                &rarr;
+                                            </td>
+                                        @endif
+                                        <td style="padding-right:{{ ! $isPriceDropAlert ? '24px' : '0' }};">
+                                            <span style="display:block;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#6b8a96;margin-bottom:2px;">New price</span>
                                             <span style="font-size:22px;font-weight:700;color:#3d8a57;">
                                                 {{ number_format((float) $price, 2) }} {{ $product->currency }}
                                             </span>
                                         </td>
-                                        <td>
-                                            @if (! $isPriceDropAlert)
+                                        @if (! $isPriceDropAlert)
+                                            <td>
                                                 <span style="display:block;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#6b8a96;margin-bottom:2px;">Your target</span>
                                                 <span style="font-size:22px;font-weight:700;color:#1a1d2e;">
                                                     {{ number_format((float) $alert->target_price, 2) }} {{ $product->currency }}
                                                 </span>
-                                            @endif
-                                        </td>
+                                            </td>
+                                        @endif
                                     </tr>
                                 </table>
                             </td>
