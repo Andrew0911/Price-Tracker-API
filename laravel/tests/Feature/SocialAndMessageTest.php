@@ -45,6 +45,90 @@ class SocialAndMessageTest extends TestCase
         ]);
     }
 
+    public function test_user_discovery_respects_privacy_and_friendship_statuses(): void
+    {
+        $authUser = $this->actingAsUser($this->user(['name' => 'Auth', 'private_account' => false]));
+        $public = $this->user(['name' => 'Public User', 'email' => 'public@example.test', 'private_account' => false]);
+        $private = $this->user(['name' => 'Private User', 'email' => 'private@example.test', 'private_account' => true]);
+        $friend = $this->user(['name' => 'Friend User', 'email' => 'friend@example.test', 'private_account' => true]);
+        $pendingReceived = $this->user(['name' => 'Pending User', 'email' => 'pending@example.test', 'private_account' => false]);
+        $this->admin(['email' => 'admin-social@example.test']);
+
+        $this->makeFriends($authUser, $friend);
+        Friendship::create([
+            'user_id' => $pendingReceived->id,
+            'friend_id' => $authUser->id,
+            'status' => Friendship::STATUS_PENDING,
+        ]);
+
+        $this->getJson('/api/users')
+            ->assertOk()
+            ->assertJsonFragment(['id' => $public->id, 'friendship_status' => 'none'])
+            ->assertJsonFragment(['id' => $friend->id, 'friendship_status' => 'accepted'])
+            ->assertJsonFragment(['id' => $pendingReceived->id, 'friendship_status' => 'pending_received'])
+            ->assertJsonMissing(['id' => $private->id]);
+
+        $this->getJson('/api/users?search=private@example.test')
+            ->assertOk()
+            ->assertJsonFragment(['id' => $private->id, 'friendship_status' => 'none']);
+    }
+
+    public function test_friend_requests_can_be_declined_removed_and_not_duplicated(): void
+    {
+        $alice = $this->actingAsUser($this->user());
+        $bob = $this->user();
+
+        $this->postJson("/api/friends/{$alice->id}")
+            ->assertUnprocessable();
+
+        $this->postJson("/api/friends/{$bob->id}")
+            ->assertOk();
+
+        $this->postJson("/api/friends/{$bob->id}")
+            ->assertConflict();
+
+        $this->actingAsUser($bob);
+
+        $this->getJson('/api/friends/requests')
+            ->assertOk()
+            ->assertJsonFragment(['id' => $alice->id]);
+
+        $this->deleteJson("/api/friends/{$alice->id}/decline")
+            ->assertOk();
+
+        $this->assertDatabaseMissing('friendships', [
+            'user_id' => $alice->id,
+            'friend_id' => $bob->id,
+        ]);
+
+        $this->makeFriends($alice, $bob);
+
+        $this->getJson('/api/friends')
+            ->assertOk()
+            ->assertJsonFragment(['id' => $alice->id]);
+
+        $this->deleteJson("/api/friends/{$alice->id}")
+            ->assertOk();
+
+        $this->assertDatabaseMissing('friendships', [
+            'user_id' => $alice->id,
+            'friend_id' => $bob->id,
+        ]);
+        $this->assertDatabaseMissing('friendships', [
+            'user_id' => $bob->id,
+            'friend_id' => $alice->id,
+        ]);
+    }
+
+    public function test_accept_requires_pending_request(): void
+    {
+        $alice = $this->actingAsUser($this->user());
+        $bob = $this->user();
+
+        $this->postJson("/api/friends/{$bob->id}/accept")
+            ->assertNotFound();
+    }
+
     public function test_admin_accounts_cannot_use_social_or_messaging_features(): void
     {
         $admin = $this->actingAsUser($this->admin());

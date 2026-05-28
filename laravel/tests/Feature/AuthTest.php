@@ -57,6 +57,56 @@ class AuthTest extends TestCase
             ->assertJsonPath('data.id', $user->id);
     }
 
+    public function test_email_verification_success_invalid_and_expired(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'verify@example.test',
+            'email_verified_at' => null,
+            'email_verification_token' => 'valid-token',
+            'email_verification_token_expires_at' => now()->addHour(),
+        ]);
+
+        $this->postJson('/api/verify-email', [
+            'email' => 'verify@example.test',
+            'token' => 'wrong-token',
+        ])->assertUnprocessable();
+
+        $expired = User::factory()->create([
+            'email' => 'expired@example.test',
+            'email_verified_at' => null,
+            'email_verification_token' => 'expired-token',
+            'email_verification_token_expires_at' => now()->subMinute(),
+        ]);
+
+        $this->postJson('/api/verify-email', [
+            'email' => 'expired@example.test',
+            'token' => 'expired-token',
+        ])->assertUnprocessable();
+
+        $this->postJson('/api/verify-email', [
+            'email' => 'verify@example.test',
+            'token' => 'valid-token',
+        ])->assertOk();
+
+        $this->assertNotNull($user->fresh()->email_verified_at);
+        $this->assertNull($user->fresh()->email_verification_token);
+        $this->assertNull($user->fresh()->email_verification_token_expires_at);
+        $this->assertNull($expired->fresh()->email_verified_at);
+    }
+
+    public function test_login_rejects_invalid_credentials(): void
+    {
+        User::factory()->create([
+            'email' => 'invalid-login@example.test',
+            'password' => 'Password1!',
+        ]);
+
+        $this->postJson('/api/login', [
+            'email' => 'invalid-login@example.test',
+            'password' => 'WrongPass1!',
+        ])->assertUnauthorized();
+    }
+
     public function test_user_can_update_account_settings_but_admin_cannot(): void
     {
         $user = User::factory()->create(['private_account' => false]);

@@ -15,10 +15,13 @@ services:
       - ./docker/linux/fpm-pool.conf:/usr/local/etc/php-fpm.d/www.conf
       - ./docker/linux/php-custom.ini:/usr/local/etc/php/conf.d/99-custom.ini
       - ./docker/linux/opcache.ini:/usr/local/etc/php/conf.d/98-opcache.ini
+      - ./docker/linux/opcache-xdebug-dev.ini:/usr/local/etc/php/conf.d/zz-opcache-xdebug-dev.ini
       - ./docker/linux/openssl.cnf:/etc/ssl/openssl.cnf
       - ./docker/nginx.sample.conf:/etc/nginx/nginx.conf
     ports:
       - "8090:80"
+    environment:
+      - XDEBUG_MODE=coverage
     depends_on:
       - redis
       - mysql

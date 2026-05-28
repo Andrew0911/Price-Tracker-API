@@ -13,10 +13,8 @@ RUN apt-get update \
 COPY ./python/requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiem codul sursă
 COPY ./python /app/
 
 EXPOSE 8000
 
-# Scoatem reload și folosim workers
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

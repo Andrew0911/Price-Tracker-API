@@ -16,20 +16,16 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Copiem codul sursă
 COPY ./laravel /var/www/html
 
-# Copiem configurațiile serverului
 COPY ./docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY ./docker/linux/fpm-pool.conf /usr/local/etc/php-fpm.d/www.conf
 COPY ./docker/linux/php-custom.ini /usr/local/etc/php/conf.d/99-custom.ini
 COPY ./docker/linux/opcache.ini /usr/local/etc/php/conf.d/98-opcache.ini
 COPY ./docker/nginx.sample.conf /etc/nginx/nginx.conf
 
-# Instalăm dependențele pentru producție
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Permisiuni
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage \
     && chmod -R 775 /var/www/html/bootstrap/cache
