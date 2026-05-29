@@ -11,10 +11,12 @@ use App\Models\PriceAlert;
 use App\Models\Product;
 use App\Repositories\ProductRepository;
 use App\Services\ScraperService;
-use Exception;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 class ProductController extends BaseController
 {
@@ -70,8 +72,16 @@ class ProductController extends BaseController
             }
 
             $user->products()->attach($product->id);
-        } catch (Exception $e) {
+        } catch (QueryException|\PDOException $e) {
+            report($e);
+
+            return $this->sendErrorResponse();
+        } catch (RuntimeException $e) {
             return $this->sendFailResponse($e->getMessage());
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->sendErrorResponse();
         }
 
         return $this->sendSuccessResponse(data: $product);
