@@ -35,12 +35,12 @@ class ProductController extends BaseController
     {
         $user = $request->user();
 
-        $domain = strtolower(parse_url($request->url, PHP_URL_HOST));
-        $proxiedDomains = StoreEnum::requiredProxyDomains();
+        // $domain = strtolower(parse_url($request->url, PHP_URL_HOST));
+        // $proxiedDomains = StoreEnum::requiredProxyDomains();
 
-        if(!$user->is_admin && in_array($domain, $proxiedDomains)){
-            return $this->sendFailResponse('You do not have permission to add a product from this store');
-        }
+        // if(!$user->is_admin && in_array($domain, $proxiedDomains)){
+        //     return $this->sendFailResponse('You do not have permission to add a product from this store');
+        // }
 
         $alreadyTracked = $user->products()->where('url', $request->url)->exists();
         if ($alreadyTracked) {
