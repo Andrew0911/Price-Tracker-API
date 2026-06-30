@@ -93,7 +93,7 @@ class ProductController extends BaseController
         $isInWishlist = $user->products()->where('products.id', $product->id)->exists();
 
         if (!$user->is_admin && !$isInWishlist) {
-            return $this->sendErrorResponse(status: Response::HTTP_FORBIDDEN);
+            return $this->sendErrorResponse(message: 'This product is not in your wishlist', status: Response::HTTP_FORBIDDEN);
         }
 
         $product->load([
